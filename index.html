@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>কে হবে কোটিপতি - KBC Bangla</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Noto Sans Bengali', sans-serif; }
+  input[type="radio"] { display: none; }
+
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at center, #1a2a6c 0%, #0a0f3d 60%, #000 100%);
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(180deg, #0d1b4c 0%, #060a2e 100%);
+    border-bottom: 3px solid #d4af37;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+  }
+  header h1 {
+    font-size: 2.2rem;
+    color: #ffd700;
+    text-shadow: 0 0 15px #d4af37, 2px 2px 4px #000;
+    letter-spacing: 2px;
+  }
+  header p { color: #c9b36b; margin-top: 5px; font-style: italic; }
+
+  /* ===== MAIN LAYOUT ===== */
+  .game-container {
+    display: flex;
+    max-width: 1200px;
+    margin: 20px auto;
+    gap: 20px;
+    padding: 0 15px;
+    position: relative;
+  }
+
+  .game-area {
+    flex: 2;
+    background: rgba(10, 20, 60, 0.8);
+    border: 2px solid #d4af37;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.3);
+    min-height: 450px;
+    position: relative;
+  }
+  .path-a, .path-b { display: none; }
+
+  .prize-ladder {
+    flex: 1;
+    background: linear-gradient(180deg, #0d1b4c 0%, #050825 100%);
+    border: 2px solid #d4af37;
+    border-radius: 15px;
+    padding: 15px;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+  .prize-ladder h2 { text-align: center; color: #ffd700; margin-bottom: 10px; font-size: 1.2rem; }
+  .prize-item {
+    display: flex; justify-content: space-between; padding: 8px 15px; margin: 4px 0;
+    border-radius: 20px; background: rgba(255, 255, 255, 0.05); font-size: 0.9rem;
+  }
+  .prize-item.current {
+    background: linear-gradient(90deg, #d4af37, #ffd700); color: #000;
+    font-weight: bold; box-shadow: 0 0 15px #ffd700; transform: scale(1.05);
+  }
+
+  /* ===== START SCREEN ===== */
+  .start-screen {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(10, 15, 40, 0.95); border-radius: 13px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 10; gap: 20px;
+  }
+  .start-screen h2 { color: #ffd700; font-size: 1.8rem; margin-bottom: 10px; text-align: center; }
+  .mode-btn {
+    display: block; width: 80%; max-width: 400px; padding: 20px;
+    background: linear-gradient(90deg, #1a2a6c, #0d1b4c);
+    border: 2px solid #d4af37; border-radius: 15px;
+    color: #fff; font-size: 1.2rem; font-weight: bold;
+    text-align: center; cursor: pointer; transition: all 0.3s;
+  }
+  .mode-btn:hover {
+    background: linear-gradient(90deg, #d4af37, #ffd700); color: #000;
+    transform: scale(1.05); box-shadow: 0 0 20px #ffd700;
+  }
+  .mode-btn span { display: block; font-size: 0.9rem; font-weight: normal; margin-top: 5px; opacity: 0.8; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ===== QUESTIONS & OPTIONS ===== */
+  .q-screen { display: block; animation: fadeIn 0.5s ease; }
+
+  .q-number { color: #ffd700; font-size: 1.1rem; margin-bottom: 5px; }
+  .q-amount { color: #c9b36b; font-size: 0.95rem; margin-bottom: 15px; }
+  .q-text {
+    font-size: 1.3rem; color: #fff; margin-bottom: 25px; padding: 15px;
+    background: rgba(212, 175, 55, 0.1); border-left: 4px solid #d4af37;
+    border-radius: 8px; line-height: 1.6;
+  }
+  .options { display: grid; gap: 12px; }
+  .option {
+    display: block; width: 100%; padding: 15px 20px; text-align: left; color: #fff;
+    background: linear-gradient(90deg, #1a2a6c, #0d1b4c);
+    border: 2px solid #4a5a9c; border-radius: 30px;
+    cursor: pointer; transition: all 0.3s; font-size: 1.1rem;
+  }
+  .option:hover:not(:disabled) { border-color: #ffd700; background: linear-gradient(90deg, #2a3a8c, #1a2a6c); transform: translateX(5px); }
+  .option .letter {
+    display: inline-block; width: 30px; height: 30px; line-height: 30px;
+    text-align: center; background: #d4af37; color: #000;
+    border-radius: 50%; margin-right: 12px; font-weight: bold;
+  }
+
+  /* ===== CORRECT / WRONG ANIMATIONS ===== */
+  .option.correct {
+    background: linear-gradient(90deg, #2e7d32, #1b5e20) !important;
+    border-color: #4caf50 !important; animation: correctPulse 0.6s ease;
+  }
+  .option.wrong {
+    background: linear-gradient(90deg, #c62828, #8e0000) !important;
+    border-color: #f44336 !important; animation: shake 0.5s ease;
+  }
+  @keyframes correctPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+
+  /* ===== WIN / LOSE SCREENS ===== */
+  .screen-win, .screen-lose {
+    display: none; text-align: center; padding: 30px 20px; animation: fadeIn 0.8s ease;
+  }
+  .screen-win.visible, .screen-lose.visible { display: block; }
+  .screen-win h2 { font-size: 2.5rem; color: #ffd700; text-shadow: 0 0 20px #d4af37; margin-bottom: 15px; }
+  .screen-win .trophy { font-size: 4rem; margin: 15px 0; animation: spin 3s linear infinite; }
+  @keyframes spin { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(360deg); } }
+  .screen-win .prize-amount {
+    font-size: 2rem; color: #fff; background: linear-gradient(90deg, #d4af37, #ffd700, #d4af37);
+    padding: 15px; border-radius: 15px; margin: 15px 0; box-shadow: 0 0 30px #ffd700;
+  }
+  .screen-lose h2 { font-size: 2.2rem; color: #f44336; margin-bottom: 15px; }
+  .screen-lose p { font-size: 1.1rem; color: #ccc; margin: 10px 0; }
+  .answer-feedback { min-height: 1.5em; margin-top: 15px; color: #ffd700; font-weight: bold; }
+  .continue-btn { border: 0; }
+
+  .restart-btn {
+    display: inline-block; margin-top: 20px; padding: 12px 35px;
+    background: linear-gradient(90deg, #d4af37, #ffd700); color: #000;
+    font-weight: bold; font-size: 1.1rem; border-radius: 30px;
+    text-decoration: none; cursor: pointer; transition: all 0.3s;
+  }
+  .restart-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px #ffd700; }
+
+  footer { text-align: center; padding: 15px; color: #c9b36b; font-size: 0.85rem; border-top: 1px solid #d4af37; margin-top: 20px; }
+
+  @media (max-width: 768px) {
+    .game-container { flex-direction: column; }
+    header h1 { font-size: 1.6rem; }
+    .q-text { font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== GLOBAL STATE CONTROLS ===== -->
+<input type="radio" name="mode" id="mode-a">
+<input type="radio" name="mode" id="mode-b">
+
+<!-- Path A Controls -->
+<input type="radio" name="qa1" id="qa1-c" class="qa-c"><input type="radio" name="qa1" id="qa1-w" class="qa-w">
+<input type="radio" name="qa2" id="qa2-c" class="qa-c"><input type="radio" name="qa2" id="qa2-w" class="qa-w">
+<input type="radio" name="qa3" id="qa3-c" class="qa-c"><input type="radio" name="qa3" id="qa3-w" class="qa-w">
+<input type="radio" name="qa4" id="qa4-c" class="qa-c"><input type="radio" name="qa4" id="qa4-w" class="qa-w">
+<input type="radio" name="qa5" id="qa5-c" class="qa-c"><input type="radio" name="qa5" id="qa5-w" class="qa-w">
+<input type="radio" name="qa6" id="qa6-c" class="qa-c"><input type="radio" name="qa6" id="qa6-w" class="qa-w">
+
+<!-- Path B Controls -->
+<input type="radio" name="qb1" id="qb1-c" class="qb-c"><input type="radio" name="qb1" id="qb1-w" class="qb-w">
+<input type="radio" name="qb2" id="qb2-c" class="qb-c"><input type="radio" name="qb2" id="qb2-w" class="qb-w">
+<input type="radio" name="qb3" id="qb3-c" class="qb-c"><input type="radio" name="qb3" id="qb3-w" class="qb-w">
+<input type="radio" name="qb4" id="qb4-c" class="qb-c"><input type="radio" name="qb4" id="qb4-w" class="qb-w">
+<input type="radio" name="qb5" id="qb5-c" class="qb-c"><input type="radio" name="qb5" id="qb5-w" class="qb-w">
+<input type="radio" name="qb6" id="qb6-c" class="qb-c"><input type="radio" name="qb6" id="qb6-w" class="qb-w">
+
+<header>
+  <h1>🎬 কে হবে কোটিপতি 🎬</h1>
+  <p>~ বাংলা সংস্করণ ~</p>
+</header>
+
+<div class="game-container">
+  
+  <!-- START SCREEN -->
+  <div class="start-screen">
+    <h2>আপনার খেলার মোড নির্বাচন করুন</h2>
+    <button class="mode-btn" type="button" data-mode="history">
+      📜 মোড এ: ইতিহাস ও সাধারণ জ্ঞান
+      <span>বাংলাদেশের ইতিহাস, ভূগোল ও সাধারণ জ্ঞান নিয়ে চ্যালেঞ্জ</span>
+    </button>
+    <button class="mode-btn" type="button" data-mode="science">
+      🔬 মোড বি: বিজ্ঞান, সাহিত্য ও সংস্কৃতি
+      <span>বিজ্ঞান, বাংলা সাহিত্য, খেলাধুলা ও সংস্কৃতি নিয়ে চ্যালেঞ্জ</span>
+    </button>
+  </div>
+
+  <div class="game-area">
+    <div id="game-content" aria-live="polite"></div>
+    
+    <!-- ===== PATH A: History & General Knowledge ===== -->
+    <div class="path-a">
+      <div class="q-screen screen-a1">
+        <div class="q-number">প্রশ্ন ১</div><div class="q-amount">💰 মূল্য: ৫০০ টাকা</div>
+        <div class="q-text">বাংলাদেশের জাতীয় ফুলের নাম কী?</div>
+        <div class="options">
+          <label class="option" for="qa1-w"><span class="letter">A</span>গোলাপ</label>
+          <label class="option" for="qa1-c"><span class="letter">B</span>শাপলা</label>
+          <label class="option" for="qa1-w"><span class="letter">C</span>বেলি</label>
+          <label class="option" for="qa1-w"><span class="letter">D</span>জুঁই</label>
+        </div>
+      </div>
+      <div class="q-screen screen-a2">
+        <div class="q-number">প্রশ্ন ২</div><div class="q-amount">💰 মূল্য: ১,০০০ টাকা</div>
+        <div class="q-text">বাংলাদেশের স্বাধীনতা দিবস কবে?</div>
+        <div class="options">
+          <label class="option" for="qa2-w"><span class="letter">A</span>১৬ ডিসেম্বর</label>
+          <label class="option" for="qa2-w"><span class="letter">B</span>২১ ফেব্রুয়ারি</label>
+          <label class="option" for="qa2-c"><span class="letter">C</span>২৬ মার্চ</label>
+          <label class="option" for="qa2-w"><span class="letter">D</span>১৪ এপ্রিল</label>
+        </div>
+      </div>
+      <div class="q-screen screen-a3">
+        <div class="q-number">প্রশ্ন ৩</div><div class="q-amount">💰 মূল্য: ২,০০০ টাকা</div>
+        <div class="q-text">পদ্মা সেতুর মোট দৈর্ঘ্য কত?</div>
+        <div class="options">
+          <label class="option" for="qa3-w"><span class="letter">A</span>৪.৮ কি.মি.</label>
+          <label class="option" for="qa3-c"><span class="letter">B</span>৬.১৫ কি.মি.</label>
+          <label class="option" for="qa3-w"><span class="letter">C</span>৮.২ কি.মি.</label>
+          <label class="option" for="qa3-w"><span class="letter">D</span>১০ কি.মি.</label>
+        </div>
+      </div>
+      <div class="q-screen screen-a4">
+        <div class="q-number">প্রশ্ন ৪</div><div class="q-amount">💰 মূল্য: ৫,০০০ টাকা</div>
+        <div class="q-text">জাতীয় সংসদ ভবনের স্থপতি কে?</div>
+        <div class="options">
+          <label class="option" for="qa4-w"><span class="letter">A</span>এফ আর খান</label>
+          <label class="option" for="qa4-w"><span class="letter">B</span>মাজহারুল ইসলাম</label>
+          <label class="option" for="qa4-c"><span class="letter">C</span>লুই আই কান</label>
+          <label class="option" for="qa4-w"><span class="letter">D</span>রফিক আজম</label>
+        </div>
+      </div>
+      <div class="q-screen screen-a5">
+        <div class="q-number">প্রশ্ন ৫</div><div class="q-amount">💰 মূল্য: ১০,০০০ টাকা</div>
+        <div class="q-text">মুজিবনগর সরকার গঠিত হয় কোন সালে?</div>
+        <div class="options">
+          <label class="option" for="qa5-w"><span class="letter">A</span>১৯৭০</label>
+          <label class="option" for="qa5-c"><span class="letter">B</span>১৯৭১</label>
+          <label class="option" for="qa5-w"><span class="letter">C</span>১৯৭২</label>
+          <label class="option" for="qa5-w"><span class="letter">D</span>১৯৭৫</label>
+        </div>
+      </div>
+      <div class="q-screen screen-a6">
+        <div class="q-number">প্রশ্ন ৬</div><div class="q-amount">💰 মূল্য: ১,০০,০০০ টাকা</div>
+        <div class="q-text">বাংলাদেশের জাতীয় পশু কোনটি?</div>
+        <div class="options">
+          <label class="option" for="qa6-w"><span class="letter">A</span>এশিয়ান হাতি</label>
+          <label class="option" for="qa6-c"><span class="letter">B</span>রয়েল বেঙ্গল টাইগার</label>
+          <label class="option" for="qa6-w"><span class="letter">C</span>সম্বর হরিণ</label>
+          <label class="option" for="qa6-w"><span class="letter">D</span>ডলফিন</label>
+        </div>
+      </div>
+      <div class="screen-win">
+        <div class="trophy">🏆</div>
+        <h2>অভিনন্দন! আপনি কোটিপতি!</h2>
+        <div class="prize-amount">💰 ১,০০,০০০ টাকা 💰</div>
+        <p style="color:#c9b36b;">আপনি সব প্রশ্নের সঠিক উত্তর দিয়েছেন!</p>
+        <a href="index.html" class="restart-btn">🔄 আবার খেলুন</a>
+      </div>
+      <div class="screen-lose">
+        <h2>😢 দুঃখিত! খেলা শেষ</h2>
+        <p>আপনার উত্তর ভুল ছিল।</p>
+        <a href="index.html" class="restart-btn">🔄 আবার চেষ্টা করুন</a>
+      </div>
+    </div>
+
+    <!-- ===== PATH B: Science, Literature & Culture ===== -->
+    <div class="path-b">
+      <div class="q-screen screen-b1">
+        <div class="q-number">প্রশ্ন ১</div><div class="q-amount">💰 মূল্য: ৫০০ টাকা</div>
+        <div class="q-text">পানির রাসায়নিক সংকেত কী?</div>
+        <div class="options">
+          <label class="option" for="qb1-w"><span class="letter">A</span>CO2</label>
+          <label class="option" for="qb1-c"><span class="letter">B</span>H2O</label>
+          <label class="option" for="qb1-w"><span class="letter">C</span>NaCl</label>
+          <label class="option" for="qb1-w"><span class="letter">D</span>O2</label>
+        </div>
+      </div>
+      <div class="q-screen screen-b2">
+        <div class="q-number">প্রশ্ন ২</div><div class="q-amount">💰 মূল্য: ১,০০০ টাকা</div>
+        <div class="q-text">'পথের পাঁচালী' উপন্যাসের রচয়িতা কে?</div>
+        <div class="options">
+          <label class="option" for="qb2-w"><span class="letter">A</span>রবীন্দ্রনাথ ঠাকুর</label>
+          <label class="option" for="qb2-c"><span class="letter">B</span>বিভূতিভূষণ বন্দ্যোপাধ্যায়</label>
+          <label class="option" for="qb2-w"><span class="letter">C</span>শরৎচন্দ্র চট্টোপাধ্যায়</label>
+          <label class="option" for="qb2-w"><span class="letter">D</span>সৈয়দ ওয়ালীউল্লাহ</label>
+        </div>
+      </div>
+      <div class="q-screen screen-b3">
+        <div class="q-number">প্রশ্ন ৩</div><div class="q-amount">💰 মূল্য: ২,০০০ টাকা</div>
+        <div class="q-text">প্রাপ্তবয়স্ক মানুষের শরীরে মোট হাড়ের সংখ্যা কত?</div>
+        <div class="options">
+          <label class="option" for="qb3-w"><span class="letter">A</span>১০৬</label>
+          <label class="option" for="qb3-w"><span class="letter">B</span>৩০৬</label>
+          <label class="option" for="qb3-c"><span class="letter">C</span>২০৬</label>
+          <label class="option" for="qb3-w"><span class="letter">D</span>২৫০</label>
+        </div>
+      </div>
+      <div class="q-screen screen-b4">
+        <div class="q-number">প্রশ্ন ৪</div><div class="q-amount">💰 মূল্য: ৫,০০০ টাকা</div>
+        <div class="q-text">বাংলাদেশের জাতীয় খেলা কোনটি?</div>
+        <div class="options">
+          <label class="option" for="qb4-c"><span class="letter">A</span>কাবাডি</label>
+          <label class="option" for="qb4-w"><span class="letter">B</span>ক্রিকেট</label>
+          <label class="option" for="qb4-w"><span class="letter">C</span>ফুটবল</label>
+          <label class="option" for="qb4-w"><span class="letter">D</span>হকি</label>
+        </div>
+      </div>
+      <div class="q-screen screen-b5">
+        <div class="q-number">প্রশ্ন ৫</div><div class="q-amount">💰 মূল্য: ১০,০০০ টাকা</div>
+        <div class="q-text">সূর্যমণ্ডলের সূর্যের সবচেয়ে কাছের গ্রহ কোনটি?</div>
+        <div class="options">
+          <label class="option" for="qb5-w"><span class="letter">A</span>শুক্র</label>
+          <label class="option" for="qb5-c"><span class="letter">B</span>বুধ</label>
+          <label class="option" for="qb5-w"><span class="letter">C</span>মঙ্গল</label>
+          <label class="option" for="qb5-w"><span class="letter">D</span>পৃথিবী</label>
+        </div>
+      </div>
+      <div class="q-screen screen-b6">
+        <div class="q-number">প্রশ্ন ৬</div><div class="q-amount">💰 মূল্য: ১,০০,০০০ টাকা</div>
+        <div class="q-text">বাংলা নববর্ষের প্রথম দিন কোনটি?</div>
+        <div class="options">
+          <label class="option" for="qb6-w"><span class="letter">A</span>১৪ ফেব্রুয়ারি</label>
+          <label class="option" for="qb6-w"><span class="letter">B</span>২১ ফেব্রুয়ারি</label>
+          <label class="option" for="qb6-c"><span class="letter">C</span>পহেলা বৈশাখ</label>
+          <label class="option" for="qb6-w"><span class="letter">D</span>১৬ ডিসেম্বর</label>
+        </div>
+      </div>
+      <div class="screen-win">
+        <div class="trophy">🏆</div>
+        <h2>অভিনন্দন! আপনি কোটিপতি!</h2>
+        <div class="prize-amount">💰 ১,০০,০০০ টাকা 💰</div>
+        <p style="color:#c9b36b;">আপনি সব প্রশ্নের সঠিক উত্তর দিয়েছেন!</p>
+        <a href="index.html" class="restart-btn">🔄 আবার খেলুন</a>
+      </div>
+      <div class="screen-lose">
+        <h2>😢 দুঃখিত! খেলা শেষ</h2>
+        <p>আপনার উত্তর ভুল ছিল।</p>
+        <a href="index.html" class="restart-btn">🔄 আবার চেষ্টা করুন</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PRIZE LADDER (Generic for both paths) -->
+  <div class="prize-ladder">
+    <h2>💎 পুরস্কার তালিকা 💎</h2>
+    <div class="prize-item"><span>৬</span><span>১,০০,০০০ টাকা</span></div>
+    <div class="prize-item"><span>৫</span><span>১০,০০০ টাকা</span></div>
+    <div class="prize-item"><span>৪</span><span>৫,০০০ টাকা</span></div>
+    <div class="prize-item"><span>৩</span><span>২,০০০ টাকা</span></div>
+    <div class="prize-item"><span>২</span><span>১,০০০ টাকা</span></div>
+    <div class="prize-item current"><span>১</span><span>৫০০ টাকা</span></div>
+  </div>
+
+</div>
+
+<script>
+  const questionBanks = {
+    history: [
+      { question: "বাংলাদেশের জাতীয় ফুলের নাম কী?", options: ["গোলাপ", "শাপলা", "বেলি", "জুঁই"], answer: 1 },
+      { question: "বাংলাদেশের স্বাধীনতা দিবস কবে?", options: ["১৬ ডিসেম্বর", "২৬ মার্চ", "২১ ফেব্রুয়ারি", "১৪ এপ্রিল"], answer: 1 },
+      { question: "পদ্মা সেতুর দৈর্ঘ্য কত?", options: ["৪.৮ কিলোমিটার", "৬.১৫ কিলোমিটার", "৮.২ কিলোমিটার", "১০ কিলোমিটার"], answer: 1 },
+      { question: "জাতীয় সংসদ ভবনের স্থপতি কে?", options: ["এফ আর খান", "মাজহারুল ইসলাম", "লুই আই কান", "রফিক আজম"], answer: 2 },
+      { question: "মুজিবনগর সরকার গঠিত হয় কোন সালে?", options: ["১৯৭০", "১৯৭১", "১৯৭২", "১৯৭৫"], answer: 1 },
+      { question: "বাংলাদেশের জাতীয় পশু কোনটি?", options: ["এশীয় হাতি", "রয়েল বেঙ্গল টাইগার", "সম্বর হরিণ", "ডলফিন"], answer: 1 },
+      { question: "বাংলাদেশের রাজধানীর নাম কী?", options: ["চট্টগ্রাম", "রাজশাহী", "ঢাকা", "খুলনা"], answer: 2 },
+      { question: "বাংলাদেশের জাতীয় পাখি কোনটি?", options: ["দোয়েল", "ময়না", "টিয়া", "কাক"], answer: 0 },
+      { question: "জাতীয় স্মৃতিসৌধ কোথায় অবস্থিত?", options: ["সাভার", "কুমিল্লা", "মেহেরপুর", "গোপালগঞ্জ"], answer: 0 },
+      { question: "বাংলাদেশের মুদ্রার নাম কী?", options: ["রুপি", "টাকা", "রিয়াল", "দিনার"], answer: 1 },
+      { question: "বাংলাদেশের জাতীয় কবি কে?", options: ["জসীমউদ্দীন", "কাজী নজরুল ইসলাম", "রবীন্দ্রনাথ ঠাকুর", "শামসুর রাহমান"], answer: 1 },
+      { question: "ভাষা আন্দোলনের শহীদ দিবস কবে পালিত হয়?", options: ["২৬ মার্চ", "১৬ ডিসেম্বর", "২১ ফেব্রুয়ারি", "১ মে"], answer: 2 },
+      { question: "বাংলাদেশের জাতীয় সংগীতের রচয়িতা কে?", options: ["কাজী নজরুল ইসলাম", "রবীন্দ্রনাথ ঠাকুর", "দ্বিজেন্দ্রলাল রায়", "জসীমউদ্দীন"], answer: 1 },
+      { question: "বিশ্বের বৃহত্তম ম্যানগ্রোভ বন সুন্দরবন কোন প্রাণীর জন্য বিখ্যাত?", options: ["এশীয় সিংহ", "রয়েল বেঙ্গল টাইগার", "জিরাফ", "পান্ডা"], answer: 1 }
+    ],
+    science: [
+      { question: "পানির রাসায়নিক সংকেত কী?", options: ["CO₂", "H₂O", "NaCl", "O₂"], answer: 1 },
+      { question: "'পথের পাঁচালী' উপন্যাসের রচয়িতা কে?", options: ["রবীন্দ্রনাথ ঠাকুর", "বিভূতিভূষণ বন্দ্যোপাধ্যায়", "শরৎচন্দ্র চট্টোপাধ্যায়", "সৈয়দ ওয়ালীউল্লাহ"], answer: 1 },
+      { question: "প্রাপ্তবয়স্ক মানুষের শরীরে সাধারণত মোট হাড়ের সংখ্যা কত?", options: ["১০৬", "৩০৬", "২০৬", "২৫০"], answer: 2 },
+      { question: "বাংলাদেশের জাতীয় খেলা কোনটি?", options: ["কাবাডি", "ক্রিকেট", "ফুটবল", "হকি"], answer: 0 },
+      { question: "সূর্যের সবচেয়ে কাছের গ্রহ কোনটি?", options: ["শুক্র", "বুধ", "মঙ্গল", "পৃথিবী"], answer: 1 },
+      { question: "বাংলা নববর্ষের প্রথম দিন কোনটি?", options: ["১৪ ফেব্রুয়ারি", "২১ ফেব্রুয়ারি", "পহেলা বৈশাখ", "১৬ ডিসেম্বর"], answer: 2 },
+      { question: "রবীন্দ্রনাথ ঠাকুর কোন সালে সাহিত্যে নোবেল পুরস্কার পান?", options: ["১৯০৫", "১৯১৩", "১৯২১", "১৯৪১"], answer: 1 },
+      { question: "উদ্ভিদের সালোকসংশ্লেষণে কোন রঞ্জকটি প্রধান ভূমিকা রাখে?", options: ["হিমোগ্লোবিন", "ক্লোরোফিল", "মেলানিন", "কেরাটিন"], answer: 1 },
+      { question: "সৌরজগতের বৃহত্তম গ্রহ কোনটি?", options: ["শনি", "পৃথিবী", "বৃহস্পতি", "নেপচুন"], answer: 2 },
+      { question: "বাংলাদেশের প্রথম কৃত্রিম উপগ্রহের নাম কী?", options: ["বঙ্গবন্ধু-১", "বিজয়-১", "বাংলা-১", "পদ্মা-১"], answer: 0 },
+      { question: "মানব হৃদপিণ্ডে কয়টি প্রকোষ্ঠ রয়েছে?", options: ["দুটি", "তিনটি", "চারটি", "পাঁচটি"], answer: 2 },
+      { question: "শব্দ কোন মাধ্যমে চলতে পারে না?", options: ["বায়ু", "পানি", "লোহা", "শূন্যস্থান"], answer: 3 },
+      { question: "বল-এর SI একক কী?", options: ["জুল", "নিউটন", "ওয়াট", "পাস্কাল"], answer: 1 },
+      { question: "আন্তর্জাতিক মাতৃভাষা দিবস কবে?", options: ["৮ মার্চ", "২১ ফেব্রুয়ারি", "১ মে", "৫ জুন"], answer: 1 }
+    ]
+  };
+  const prizes = ["৫০০", "১,০০০", "২,০০০", "৫,০০০", "১০,০০০", "১,০০,০০০"];
+  const prizeItems = Array.from(document.querySelectorAll(".prize-item"));
+  const gameContent = document.getElementById("game-content");
+  const startScreen = document.querySelector(".start-screen");
+  let selectedQuestions = [];
+  let questionIndex = 0;
+
+  function shuffle(items) {
+    const shuffled = [...items];
+    for (let index = shuffled.length - 1; index > 0; index--) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+    }
+    return shuffled;
+  }
+
+  function updatePrizeLadder() {
+    prizeItems.forEach((item, index) => {
+      item.classList.toggle("current", index === prizeItems.length - questionIndex - 1);
+    });
+  }
+
+  function createTextElement(className, text) {
+    const element = document.createElement("div");
+    element.className = className;
+    element.textContent = text;
+    return element;
+  }
+
+  function renderQuestion() {
+    updatePrizeLadder();
+    const question = selectedQuestions[questionIndex];
+    const screen = document.createElement("section");
+    screen.className = "q-screen";
+    screen.append(
+      createTextElement("q-number", `প্রশ্ন ${questionIndex + 1}`),
+      createTextElement("q-amount", `💰 মূল্য: ${prizes[questionIndex]} টাকা`),
+      createTextElement("q-text", question.question)
+    );
+
+    const options = document.createElement("div");
+    options.className = "options";
+    const feedback = createTextElement("answer-feedback", "");
+
+    shuffle(question.options.map((text, index) => ({ text, correct: index === question.answer })))
+      .forEach((option, index) => {
+        const button = document.createElement("button");
+        button.className = "option";
+        button.type = "button";
+        const letter = document.createElement("span");
+        letter.className = "letter";
+        letter.textContent = String.fromCharCode(65 + index);
+        button.append(letter, document.createTextNode(option.text));
+        button.addEventListener("click", () => {
+          options.querySelectorAll("button").forEach((choice) => {
+            choice.disabled = true;
+          });
+          if (option.correct) {
+            button.classList.add("correct");
+            feedback.textContent = "সঠিক উত্তর!";
+          } else {
+            button.classList.add("wrong");
+            const correctOption = Array.from(options.querySelectorAll("button"))
+              .find((choice) => choice.textContent.slice(1) === question.options[question.answer]);
+            correctOption?.classList.add("correct");
+            feedback.textContent = `ভুল উত্তর। সঠিক উত্তর: ${question.options[question.answer]}`;
+          }
+
+          const nextButton = document.createElement("button");
+          nextButton.className = "restart-btn continue-btn";
+          nextButton.type = "button";
+          nextButton.textContent = option.correct
+            ? questionIndex === selectedQuestions.length - 1 ? "ফলাফল দেখুন" : "পরের প্রশ্ন"
+            : "ফলাফল দেখুন";
+          nextButton.addEventListener("click", () => {
+            if (!option.correct) {
+              renderResult(false);
+            } else if (questionIndex === selectedQuestions.length - 1) {
+              renderResult(true);
+            } else {
+              questionIndex++;
+              renderQuestion();
+            }
+          });
+          screen.append(feedback, nextButton);
+        });
+        options.append(button);
+      });
+
+    screen.append(options);
+    gameContent.replaceChildren(screen);
+  }
+
+  function renderResult(won) {
+    const result = document.createElement("section");
+    result.className = won ? "screen-win visible" : "screen-lose visible";
+    const heading = document.createElement("h2");
+    heading.textContent = won ? "অভিনন্দন! আপনি কোটিপতি!" : "😢 দুঃখিত! খেলা শেষ";
+    result.append(heading);
+    if (won) {
+      result.append(
+        createTextElement("trophy", "🏆"),
+        createTextElement("prize-amount", `💰 ${prizes[prizes.length - 1]} টাকা 💰`),
+        createTextElement("", "আপনি সব প্রশ্নের সঠিক উত্তর দিয়েছেন!")
+      );
+    } else {
+      result.append(createTextElement("", "আপনার উত্তর ভুল ছিল।"));
+    }
+    const restart = document.createElement("button");
+    restart.className = "restart-btn";
+    restart.type = "button";
+    restart.textContent = "🔄 আবার খেলুন";
+    restart.addEventListener("click", returnToMenu);
+    result.append(restart);
+    gameContent.replaceChildren(result);
+  }
+
+  function startGame(mode) {
+    selectedQuestions = shuffle(questionBanks[mode]).slice(0, prizes.length);
+    questionIndex = 0;
+    startScreen.style.display = "none";
+    renderQuestion();
+  }
+
+  function returnToMenu() {
+    gameContent.replaceChildren();
+    prizeItems.forEach((item) => item.classList.remove("current"));
+    startScreen.style.display = "flex";
+  }
+
+  document.querySelectorAll("[data-mode]").forEach((button) => {
+    button.addEventListener("click", () => startGame(button.dataset.mode));
+  });
+</script>
+
+<footer>
+  🎮 কে হবে কোটিপতি - বাংলা সংস্করণ
+</footer>
+
+</body>
+</html>
